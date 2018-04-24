@@ -37,6 +37,14 @@ elif [[ $words[2] = --help ]] ; then
   # suggest 'advixe-cl --help <action>'
   # 'help' and 'version' are still valid actions
   # leading -- need to be stripped off
-  _values 'actions' ${advixe_actions[@]/--/} && return 0
+  if [ $CURRENT -eq 3 ]
+  then
+    _values 'actions' ${advixe_actions[@]/--/} && return 0
+  else
+    # no further completion after 'advixe-cl --help <action>'
+    return 0
+  fi
+elif [[ $words[2] = --version ]] ; then
+  return 0
 fi
 _message "not implemented yet, sorry"
