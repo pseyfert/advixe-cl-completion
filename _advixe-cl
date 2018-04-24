@@ -45,11 +45,38 @@ _advixe_cl_snapshot() {
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
   '-- [Snapshot filename]:snapshot file:_files -g \*.advixeexpz'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--search-dir=[specify search directories]'
   )
-  # missing:
-  # -mpi-rank=<integer>
-  # -search-dir=<string>
-  _arguments -C "$snapshot_options[@]"
+  if compset -P '*-mpi-rank='; then
+    _message "Specify the MPI rank of the result to be imported."
+    return 0;
+  elif compset -P '*-search-dir=*='; then
+    _path_files -/
+  elif compset -P '*-search-dir='; then
+    local -a search_categories
+    search_categories=(
+    'all'
+    'bin'
+    'src'
+    'sym'
+    'all:r'
+    'bin:r'
+    'src:r'
+    'sym:r'
+    'all:p'
+    'bin:p'
+    'src:p'
+    'sym:p'
+    'all:rp'
+    'bin:rp'
+    'src:rp'
+    'sym:rp'
+    )
+    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
+  else
+    _arguments -C "$snapshot_options[@]"
+  fi
 }
 
 if [ $CURRENT -eq 2 ] ; then
