@@ -19,20 +19,42 @@
 # or submit itself to any jurisdiction.
 
 local advixe_actions;advixe_actions=(
-    '--collect'
-    '--command'
-    '--help[Print help message (global one, or for an action)]'
-    '--import-dir'
-    '--mark-up-loops'
-    '--report'
-    '--snapshot'
-    '--version[Print version number]'
-    '--workflow')
+'--collect'
+'--command'
+'--help[Print help message (global one, or for an action)]'
+'--import-dir'
+'--mark-up-loops'
+'--report'
+'--snapshot'
+'--version[Print version number]'
+'--workflow')
+
+_advixe_cl_snapshot() {
+  if [[ $words[(($CURRENT - 1))] = -- ]] ; then
+    _files -X 'snapshot filename' -g '*.advixeexpz'
+    return 0
+  fi
+  local snapshot_options;snapshot_options=(
+  '(--cache-binaries --no-cache-binaries)--cache-binaries[Cache binaries into snapshot]'
+  '(--cache-binaries --no-cache-binaries)--no-cache-binaries[Do not cache binaries into snapshot]'
+  '(--cache-sources --no-cache-sources)--cache-sources[Cache sources into snapshot]'
+  '(--cache-sources --no-cache-sources)--no-cache-sources[Do not cache sources into snapshot]'
+  '(--pack --no-pack)--pack[Pack snapshot into archive]'
+  '(--pack --no-pack)--no-pack[Do not pack snapshot into archive]'
+  '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
+  '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+  '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+  '-- [Snapshot filename]:snapshot file:_files -g \*.advixeexpz'
+  )
+  # missing:
+  # -mpi-rank=<integer>
+  # -search-dir=<string>
+  _arguments -C "$snapshot_options[@]"
+}
 
 if [ $CURRENT -eq 2 ] ; then
   # suggest <action>
-  _arguments -s ${advixe_actions} && return 0
-		
+  _arguments ${advixe_actions} && return 0
 elif [[ $words[2] = --help ]] ; then
   # suggest 'advixe-cl --help <action>'
   # 'help' and 'version' are still valid actions
@@ -45,6 +67,9 @@ elif [[ $words[2] = --help ]] ; then
     return 0
   fi
 elif [[ $words[2] = --version ]] ; then
+  return 0
+elif [[ $words[2] = --snapshot ]] ; then
+  _advixe_cl_snapshot
   return 0
 fi
 _message "not implemented yet, sorry"
