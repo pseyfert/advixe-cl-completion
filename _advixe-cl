@@ -20,14 +20,76 @@
 
 local advixe_actions;advixe_actions=(
 '--collect'
-'--command'
+'--command[Send a command to a running data collection]'
 '--help[Print help message (global one, or for an action)]'
 '--import-dir'
 '--mark-up-loops'
 '--report'
-'--snapshot'
+'--snapshot[Create a result snapshot]'
 '--version[Print version number]'
 '--workflow')
+
+_conditional_normal() {
+  # NB: the current word is in words, and I don't want to trigger here on --<tab>
+  if [[ ${words[(i)--]} -lt ${#words} ]]; then
+    local shift_by
+    shift_by=${words[(i)--]}
+    shift $shift_by words
+    (( CURRENT -= $shift_by ))
+
+    #for ((i = 1 ; i <= ${#words} ; i++))
+    #do
+    #  _message "word $i is $words[i]"
+    #done
+    #_message "CURRENT is $CURRENT"
+    _normal
+  else
+    # there is no -- in the current line
+    return 33
+  fi
+}
+
+_advixe_cl_command() {
+  if [[ $CURRENT = 3 ]]; then
+    _message "huh"
+    local -a advixe_command_commands
+    advixe_command_commands=(
+    'detach'
+    'pause'
+    'resume'
+    'cancel'
+    'stop'
+    'status'
+    )
+    _wanted arguments expl 'command' compadd -- "$advixe_command_commands[@]"
+  else
+    local test_normal
+    _conditional_normal
+    test_normal=$?
+    if [[ $test_normal -ne 33 ]]; then
+      return 0
+    elif compset -P '*-result-dir='; then
+      _message "(outer) something to do"
+      _path_files -/
+    else
+      # quick hack, to get the command out of the command line
+      # TODO: fix that 'advixe-cl --command status -<TAB>' does not complete w/o this hack
+      if [[ $CURRENT -gt 3 ]]; then
+        shift 2 words
+        (( CURRENT -= 2 ))
+      fi
+
+      # TODO: ensure --result-dir does not get suggested more than once
+      local command_options;command_options=(
+      '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+      '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+      '--result-dir=[specify result directories]'
+      '-- [continue with target and target options]'
+      )
+      _arguments "$command_options[@]"
+    fi
+  fi
+}
 
 _advixe_cl_snapshot() {
   if [[ $words[(($CURRENT - 1))] = -- ]] ; then
@@ -97,6 +159,9 @@ elif [[ $words[2] = --version ]] ; then
   return 0
 elif [[ $words[2] = --snapshot ]] ; then
   _advixe_cl_snapshot
+elif [[ $words[2] = --command ]] ; then
+  _advixe_cl_command
   return 0
+else
+  _message "not implemented yet, sorry"
 fi
-_message "not implemented yet, sorry"
