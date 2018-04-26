@@ -19,7 +19,7 @@
 # or submit itself to any jurisdiction.
 
 local advixe_actions;advixe_actions=(
-'--collect'
+'--collect[Collect specified data]'
 '--command[Send a command to a running data collection]'
 '--help[Print help message (global one, or for an action)]'
 '--import-dir'
@@ -62,6 +62,32 @@ _advixe_cl_collect() {
     _describe -t collect-datas 'data to collect' advixe_collect_data $*
     return 0
   fi
+  local test_normal
+  _conditional_normal
+  test_normal=$?
+  if [[ $test_normal -ne 33 ]]; then
+    return 0
+  fi
+  # quick hack, to get the command out of the command line
+  # TODO: fix that 'advixe-cl --collect string -<TAB>' does not complete w/o this hack
+  if [[ $CURRENT -gt 3 ]]; then
+    shift 2 words
+    (( CURRENT -= 2 ))
+  fi
+
+  local collect_options;collect_options=(
+  '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+  '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+  '(-benchmark-sync -no-benchmark-sync)-benchmark-sync[Only one of concurrently executing Advisor instances runs benchmarks.]'
+  '(-benchmark-sync -no-benchmark-sync)-no-benchmark-sync[All concurrently executing Advisor instances run benchmarks.]'
+  '(-stack-stitching -no-stack-stitching)-stack-stitching[Restruct call flow to point introducing parallel workload]'
+  '(-stack-stitching -no-stack-stitching)-no-stack-stitching[Do not restruct call flow to point introducing parallel workload]'
+  '(-stacks -no-stacks)-stacks[Enable advanced collection of call stacks]'
+  '(-stacks -no-stacks)-no-stacks[Disable advanced collection of call stacks]'
+  '(-start-paused -resume-after*)-start-paused[Start data collection paused]'
+  '-- [continue with target and target options]'
+  )
+  _arguments "$collect_options[@]"
 }
 
 _advixe_cl_command() {
