@@ -49,9 +49,23 @@ _conditional_normal() {
   fi
 }
 
+_advixe_cl_collect() {
+  if [[ $CURRENT = 3 ]]; then
+    local -a advixe_collect_data
+    advixe_collect_data=(
+    survey:"Explore where to add efficient vectorization and/or threading."
+    dependencies:"Identify and explore loop-carried dependencies for marked loops."
+    map:"Identify and explore complex memory accesses for marked loops."
+    suitability:"Analyze the annotated program to check its predicted parallel performance."
+    tripcounts:"Find how many iterations are executed."
+    )   
+    _describe -t collect-datas 'data to collect' advixe_collect_data $*
+    return 0
+  fi
+}
+
 _advixe_cl_command() {
   if [[ $CURRENT = 3 ]]; then
-    _message "huh"
     local -a advixe_command_commands
     advixe_command_commands=(
     'detach'
@@ -159,9 +173,18 @@ elif [[ $words[2] = --version ]] ; then
   return 0
 elif [[ $words[2] = --snapshot ]] ; then
   _advixe_cl_snapshot
+  return 0
 elif [[ $words[2] = --command ]] ; then
   _advixe_cl_command
   return 0
+elif [[ $words[2] = --collect ]] ; then
+  _advixe_cl_collect
+  return 0
 else
+# not implemented
+  # '--import-dir'
+  # '--mark-up-loops'
+  # '--report'
+  # '--workflow'
   _message "not implemented yet, sorry"
 fi
