@@ -1,4 +1,4 @@
-[![Licence: Apache License](https://img.shields.io/github/license/pseyfert/advixe-cl-completion.svg)](LICENSE)
+[![License: Apache License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Build Status](https://travis-ci.org/pseyfert/advixe-cl-completion.svg?branch=master)](https://travis-ci.org/pseyfert/advixe-cl-completion)
 
 # advixe-cl-completion
