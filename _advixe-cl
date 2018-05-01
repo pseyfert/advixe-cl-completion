@@ -24,7 +24,7 @@ local advixe_actions;advixe_actions=(
 '--help[Print help message (global one, or for an action)]'
 '--import-dir[Import previously collected data from the given directory]'
 '--mark-up-loops[Select loops for deeper analysis]'
-'--report'
+'--report[Report the results that were previously gathered]'
 '--snapshot[Create a result snapshot]'
 '--version[Print version number]'
 '--workflow[Display explanation of advisor workflows]')
@@ -46,6 +46,147 @@ _conditional_normal() {
   else
     # there is no -- in the current line
     return 33
+  fi
+}
+
+_advixe_cl_report() {
+  local reporttype
+  if [[ $CURRENT = 3 ]]; then
+    local -a reports
+    reports=(
+    survey:"shows results of the survey analysis"
+    annotations:"lists the annotations in the sources"
+    custom:"enables using custom report"
+    dependencies:"shows possible dependencies"
+    hotspots:""
+    issues:""
+    joined:""
+    map:"reports memory access patterns"
+    roofs:""
+    suitability:"shows possible performance gains"
+    summary:"shows the collection summary"
+    threads:"shows the list of threads"
+    top-down:"shows the report in a top-down view"
+    tripcounts:"shows survey report with tripcounts data added"
+    )
+    _describe -t reports 'data to collect' reports $*
+    return 0
+  else
+    # quick hack, to get the command out of the command line
+    # TODO: fix that 'advixe-cl --collect string -<TAB>' does not complete w/o this hack
+    if [[ $CURRENT -gt 3 ]]; then
+      if [[ $words[2] = '--collect' ]]; then
+        reporttype=$words[3]
+      fi
+      shift 2 words
+      (( CURRENT -= 2 ))
+    fi
+  fi
+  local test_normal
+  _conditional_normal
+  test_normal=$?
+  if [[ $test_normal -ne 33 ]]; then
+    return 0
+  fi
+  local report_options;report_options=(
+  '(--bottom-up --no-bottom-up)--bottom-up[Use bottom-up mode for report]'
+  '(--bottom-up --no-bottom-up)--no-bottom-up[Do not use bottom-up mode for report]'
+  '--top-down[Display report in top-down mode]'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
+  '--option-file[Path of an option file]:option file:_path_files'
+  '--search-dir=[specify search directories]'
+  '(--format=text --format=csv --format=xml)--format=text[Output report as text]'
+  '(--format=text --format=csv --format=xml)--format=csv[Output report as csv]'
+  '(--format=text --format=csv --format=xml)--format=xml[Output report as xml]'
+  '(--show-functions --no-show-functions)--show-functions[Show functions in bottom-up mode]'
+  '(--show-functions --no-show-functions)--no-show-functions[Do not show functions in bottom-up mode]'
+  '(--show-loops --no-show-loops)--show-loops[Show loops in bottom-up mode]'
+  '(--show-loops --no-show-loops)--no-show-loops[Do not show loops in bottom-up mode]'
+  '(--show-not-executed --no-show-not-executed)--show-not-executed [Show not executed and fully unrolled loops]'
+  '(--show-not-executed --no-show-not-executed)--no-show-not-executed[Do not show executed and fully unrolled loops]'
+  '(--dynamic --no-dynamic)--dynamic[Show dynamic instruction mix]'
+  '(--dynamic --no-dynamic)--no-dynamic[Show static instruction mix]'
+  '(-show-all-columns -no-show-all-columns)-show-all-columns[Print all available columns]'
+  '(-show-all-columns -no-show-all-columns)-no-show-all-columns[Do not print all available columns]'
+  '(-show-all-rows -no-show-all-rows)-show-all-rows[Print all available rows]'
+  '(-show-all-rows -no-show-all-rows)-no-show-all-rows[Do not print all available rows]'
+  '-display-callstack[Display the call stacks for each function call]'
+  '(-refinalize-survey -no-refinalize-survey)-refinalize-survey[Refinalize survey]'
+  '(-refinalize-survey -no-refinalize-survey)-no-refinalize-survey[Do not refinalize survey]'
+  '(--mix --no-mix)--mix[Show instruction mix columns]'
+  '(--mix --no-mix)--no-mix[Do not show instruction mix columns]'
+  '(-recalculate-time -no-recalculate-time)-recalculate-time[Recalculate time after filtering]'
+  '(-recalculate-time -no-recalculate-time)-no-recalculate-time[Do not recalculate time after filtering]'
+  '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+  '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+  '(-threading-model=tbb -threading-model=cilk -threading-model=openmp -threading-model=other)-threading-model=tbb[Threading model for evaluation]'
+  '(-threading-model=tbb -threading-model=cilk -threading-model=openmp -threading-model=other)-threading-model=cilk[Threading model for evaluation]'
+  '(-threading-model=tbb -threading-model=cilk -threading-model=openmp -threading-model=other)-threading-model=openmp[Threading model for evaluation]'
+  '(-threading-model=tbb -threading-model=cilk -threading-model=openmp -threading-model=other)-threading-model=other[Threading model for evaluation]'
+  '(-target-system=cpu -target-system=xeon-phi -target-system=offload-to-xeon-phi)-target-system=cpu[Target system for evaluation]'
+  '(-target-system=cpu -target-system=xeon-phi -target-system=offload-to-xeon-phi)-target-system=xeon-phi[Target system for evaluation]'
+  '(-target-system=cpu -target-system=xeon-phi -target-system=offload-to-xeon-phi)-target-system=offload-to-xeon-phi[Target system for evaluation]'
+  '-report-template=[set template file for report]: :_path_files'
+  '-report-output=[set output file for report]: :_path_files'
+  "-limit=[set number of items to print]: : _message \"items to print (unsigned int)\""
+  )
+  if [[ $reporttype = "survey" ]]; then 
+    if [[ ${words[(i)--sort*]} -gt ${#words} ]]; then
+      report_options+=(
+      '(-s -S)'{--sort-asc=,-s}="[sort data ascending by column name]: : _message \"column name\""
+      '(-s -S)'{--sort-desc=,-S}="[sort data descending by column name]: : _message \"column name\""
+      )
+    fi
+    report_options+=(
+    "-filter=[filter data by by column name]: : _message \"column name\""
+    )
+  fi
+  )
+  _csv_delimiters() {
+    _wanted arguments expl "csv separator" compadd -- "comma" "tab" "semicolon"
+  }
+  report_options+=(
+  '-csv-delimiter=[Identify a delimiter string for the CSV]: :_csv_delimiters'
+  )
+  local reduce_text
+  reduce_text="Comma-separated list of sites"
+  report_options+=(
+  "-reduce-lock-contention=[Sites where to reduce lock contention]: : _message \"$reduce_text\""
+  "-reduce-lock-overhead=[Sites where to reduce lock overhead]: : _message \"$reduce_text\""
+  "-reduce-site-overhead=[Sites where to reduce site overhead]: : _message \"$reduce_text\""
+  "-reduce-task-overhead=[Sites where to reduce task overhead]: : _message \"$reduce_text\""
+  "-enable-task-chunking=[Sites where to task chunking will be enabled]: : _message \"$reduce_text\""
+  )
+
+  if compset -P '*-mpi-rank='; then
+    _message "Specify the MPI rank of the result to be imported."
+    return 0;
+  elif compset -P '*-search-dir=*='; then
+    _path_files -/
+  elif compset -P '*-search-dir='; then
+    local -a search_categories
+    search_categories=(
+    'all'
+    'bin'
+    'src'
+    'sym'
+    'all:r'
+    'bin:r'
+    'src:r'
+    'sym:r'
+    'all:p'
+    'bin:p'
+    'src:p'
+    'sym:p'
+    'all:rp'
+    'bin:rp'
+    'src:rp'
+    'sym:rp'
+    )
+    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
+  else
+    _arguments -C "$report_options[@]"
   fi
 }
 
@@ -470,7 +611,7 @@ elif [[ $words[2] = --workflow ]] ; then
   _message "no more arguments"
   return 0
 elif [[ $words[2] = --report ]] ; then
-  _message "not implemented yet, sorry"
+  _advixe_cl_report
 else
   _message "ERROR: completion couldn't identify / doesn't know action"
 fi
