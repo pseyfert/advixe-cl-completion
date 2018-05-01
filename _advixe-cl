@@ -22,8 +22,8 @@ local advixe_actions;advixe_actions=(
 '--collect[Collect specified data]'
 '--command[Send a command to a running data collection]'
 '--help[Print help message (global one, or for an action)]'
-'--import-dir'
-'--mark-up-loops'
+'--import-dir[Import previously collected data from the given directory]'
+'--mark-up-loops[Select loops for deeper analysis]'
 '--report'
 '--snapshot[Create a result snapshot]'
 '--version[Print version number]'
@@ -47,6 +47,58 @@ _conditional_normal() {
     # there is no -- in the current line
     return 33
   fi
+}
+
+_advixe_cl_import_dir() {
+  if [[ $CURRENT = 3 ]]; then
+    _path_files -/
+    return 0
+  fi
+  # quick hack
+  # TODO: fix that 'advixe-cl --import somepath -<TAB>' does not complete w/o this hack
+  if [[ $CURRENT -gt 3 ]]; then
+    shift 2 words
+    (( CURRENT -= 2 ))
+  fi
+  local import_options;import_options=(
+  '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+  '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+  '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--search-dir=[specify search directories]'
+  )
+  if compset -P '*-mpi-rank='; then
+    _message "Specify the MPI rank of the result to be imported."
+    return 0;
+  elif compset -P '*-search-dir=*='; then
+    _path_files -/
+    return 0
+  elif compset -P '*-search-dir='; then
+    local -a search_categories
+    search_categories=(
+    'all'
+    'bin'
+    'src'
+    'sym'
+    'all:r'
+    'bin:r'
+    'src:r'
+    'sym:r'
+    'all:p'
+    'bin:p'
+    'src:p'
+    'sym:p'
+    'all:rp'
+    'bin:rp'
+    'src:rp'
+    'sym:rp'
+    )
+    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
+    return 0
+  else
+    _arguments -C "$import_options[@]"
+  fi
+}
 }
 
 _advixe_cl_collect() {
@@ -306,6 +358,33 @@ _advixe_cl_command() {
   fi
 }
 
+_advixe_cl_mark_up_loops() {
+  _mark_up_text() {
+    _message "comma separated N1,N5,N42, where 'Nx' is loop ID from survey report"
+  }
+  local markup_options;markup_options=(
+  '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
+  '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
+  '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--append=[Add loops to list of selections]:_mark_up_text'
+  '--remove=[Remove loops from list of selections]:_mark_up_text'
+  '--select=[Select specified loops only]:_mark_up_text'
+  )
+  _loops_criteria() {
+    _values , criteria 'scalar' 'total-time>N' 'has-source' 'has-issue' 'loop-height=N'
+  }
+  markup_options+=(
+  '-loops=[Select loops for deeper analysis]: :_loops_criteria'
+  )
+  if compset -P '*-mpi-rank='; then
+    _message "Specify the MPI rank of the result to be imported."
+    return 0;
+  else
+    _arguments -C "$markup_options[@]"
+  fi
+}
+
 _advixe_cl_snapshot() {
   if [[ $words[(($CURRENT - 1))] = -- ]] ; then
     _files -X 'snapshot filename' -g '*.advixeexpz'
@@ -380,6 +459,9 @@ elif [[ $words[2] = --command ]] ; then
   return 0
 elif [[ $words[2] = --collect ]] ; then
   _advixe_cl_collect
+  return 0
+elif [[ $words[2] = --mark-up-loops ]] ; then
+  _advixe_cl_mark_up_loops
   return 0
 else
 # not implemented
