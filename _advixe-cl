@@ -158,32 +158,7 @@ _advixe_cl_report() {
   "-enable-task-chunking=[Sites where to task chunking will be enabled]: : _message \"$reduce_text\""
   )
 
-  if compset -P '*-search-dir=*='; then
-    _path_files -/
-  elif compset -P '*-search-dir='; then
-    local -a search_categories
-    search_categories=(
-    'all'
-    'bin'
-    'src'
-    'sym'
-    'all:r'
-    'bin:r'
-    'src:r'
-    'sym:r'
-    'all:p'
-    'bin:p'
-    'src:p'
-    'sym:p'
-    'all:rp'
-    'bin:rp'
-    'src:rp'
-    'sym:rp'
-    )
-    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
-  else
-    _arguments -C "$report_options[@]"
-  fi
+  _arguments -C "$report_options[@]"
 }
 
 _advixe_cl_import_dir() {
@@ -204,34 +179,7 @@ _advixe_cl_import_dir() {
   '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--search-dir=[specify search directories]'
   )
-  if compset -P '*-search-dir=*='; then
-    _path_files -/
-    return 0
-  elif compset -P '*-search-dir='; then
-    local -a search_categories
-    search_categories=(
-    'all'
-    'bin'
-    'src'
-    'sym'
-    'all:r'
-    'bin:r'
-    'src:r'
-    'sym:r'
-    'all:p'
-    'bin:p'
-    'src:p'
-    'sym:p'
-    'all:rp'
-    'bin:rp'
-    'src:rp'
-    'sym:rp'
-    )
-    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
-    return 0
-  else
-    _arguments -C "$import_options[@]"
-  fi
+  _arguments -C "$import_options[@]"
 }
 
 _advixe_cl_collect() {
@@ -262,33 +210,6 @@ _advixe_cl_collect() {
     fi
     shift 2 words
     (( CURRENT -= 2 ))
-  fi
-
-  if compset -P '*-search-dir=*='; then
-    _path_files -/
-    return 0
-  elif compset -P '*-search-dir='; then
-    local -a search_categories
-    search_categories=(
-    'all'
-    'bin'
-    'src'
-    'sym'
-    'all:r'
-    'bin:r'
-    'src:r'
-    'sym:r'
-    'all:p'
-    'bin:p'
-    'src:p'
-    'sym:p'
-    'all:rp'
-    'bin:rp'
-    'src:rp'
-    'sym:rp'
-    )
-    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
-    return 0
   fi
 
   local collect_options;collect_options=(
@@ -469,8 +390,6 @@ _advixe_cl_command() {
     test_normal=$?
     if [[ $test_normal -ne 33 ]]; then
       return 0
-    elif compset -P '*-result-dir='; then
-      _path_files -/
     else
       # quick hack, to get the command out of the command line
       # TODO: fix that 'advixe-cl --command status -<TAB>' does not complete w/o this hack
@@ -479,11 +398,10 @@ _advixe_cl_command() {
         (( CURRENT -= 2 ))
       fi
 
-      # TODO: ensure --result-dir does not get suggested more than once
       local command_options;command_options=(
       '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
       '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
-      '--result-dir=[specify result directories]'
+      '--result-dir=[specify result directories]: :_path_files -/'
       '-- [continue with target and target options]'
       )
       _arguments "$command_options[@]"
@@ -532,32 +450,7 @@ _advixe_cl_snapshot() {
   '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--search-dir=[specify search directories]'
   )
-  if compset -P '*-search-dir=*='; then
-    _path_files -/
-  elif compset -P '*-search-dir='; then
-    local -a search_categories
-    search_categories=(
-    'all'
-    'bin'
-    'src'
-    'sym'
-    'all:r'
-    'bin:r'
-    'src:r'
-    'sym:r'
-    'all:p'
-    'bin:p'
-    'src:p'
-    'sym:p'
-    'all:rp'
-    'bin:rp'
-    'src:rp'
-    'sym:rp'
-    )
-    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
-  else
-    _arguments -C "$snapshot_options[@]"
-  fi
+  _arguments -C "$snapshot_options[@]"
 }
 
 if [ $CURRENT -eq 2 ] ; then
@@ -576,17 +469,8 @@ elif [[ $words[2] = --help ]] ; then
   fi
 elif [[ $words[2] = --version ]] ; then
   return 0
-elif [[ $words[2] = --snapshot ]] ; then
-  _advixe_cl_snapshot
-  return 0
 elif [[ $words[2] = --command ]] ; then
   _advixe_cl_command
-  return 0
-elif [[ $words[2] = --collect ]] ; then
-  _advixe_cl_collect
-  return 0
-elif [[ $words[2] = --import-dir ]] ; then
-  _advixe_cl_mark_import_dir
   return 0
 elif [[ $words[2] = --mark-up-loops ]] ; then
   _advixe_cl_mark_up_loops
@@ -594,8 +478,47 @@ elif [[ $words[2] = --mark-up-loops ]] ; then
 elif [[ $words[2] = --workflow ]] ; then
   _message "no more arguments"
   return 0
+fi
+
+
+#the remaining (snapshot, collect, import-dir, and report all support --search-dir=...
+if compset -P '*-search-dir=*='; then
+  _path_files -/
+  return 0
+elif compset -P '*-search-dir='; then
+  local -a search_categories
+  search_categories=(
+  'all'
+  'bin'
+  'src'
+  'sym'
+  'all:r'
+  'bin:r'
+  'src:r'
+  'sym:r'
+  'all:p'
+  'bin:p'
+  'src:p'
+  'sym:p'
+  'all:rp'
+  'bin:rp'
+  'src:rp'
+  'sym:rp'
+  )
+  _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
+  return 0
+fi
+
+if [[ $words[2] = --snapshot ]] ; then
+  _advixe_cl_snapshot
+  return 0
+elif [[ $words[2] = --collect ]] ; then
+  _advixe_cl_collect
+  return 0
+elif [[ $words[2] = --import-dir ]] ; then
+  _advixe_cl_mark_import_dir
+  return 0
 elif [[ $words[2] = --report ]] ; then
   _advixe_cl_report
-else
-  _message "ERROR: completion couldn't identify / doesn't know action"
+  return 0
 fi
