@@ -92,7 +92,7 @@ _advixe_cl_report() {
   '(--bottom-up --no-bottom-up)--bottom-up[Use bottom-up mode for report]'
   '(--bottom-up --no-bottom-up)--no-bottom-up[Do not use bottom-up mode for report]'
   '--top-down[Display report in top-down mode]'
-  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
   '--option-file[Path of an option file]:option file:_path_files'
   '--search-dir=[specify search directories]'
@@ -158,10 +158,7 @@ _advixe_cl_report() {
   "-enable-task-chunking=[Sites where to task chunking will be enabled]: : _message \"$reduce_text\""
   )
 
-  if compset -P '*-mpi-rank='; then
-    _message "Specify the MPI rank of the result to be imported."
-    return 0;
-  elif compset -P '*-search-dir=*='; then
+  if compset -P '*-search-dir=*='; then
     _path_files -/
   elif compset -P '*-search-dir='; then
     local -a search_categories
@@ -204,13 +201,10 @@ _advixe_cl_import_dir() {
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
   '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
-  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--search-dir=[specify search directories]'
   )
-  if compset -P '*-mpi-rank='; then
-    _message "Specify the MPI rank of the result to be imported."
-    return 0;
-  elif compset -P '*-search-dir=*='; then
+  if compset -P '*-search-dir=*='; then
     _path_files -/
     return 0
   elif compset -P '*-search-dir='; then
@@ -505,7 +499,7 @@ _advixe_cl_mark_up_loops() {
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
   '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
-  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--append=[Add loops to list of selections]:_mark_up_text'
   '--remove=[Remove loops from list of selections]:_mark_up_text'
   '--select=[Select specified loops only]:_mark_up_text'
@@ -516,12 +510,7 @@ _advixe_cl_mark_up_loops() {
   markup_options+=(
   '-loops=[Select loops for deeper analysis]: :_loops_criteria'
   )
-  if compset -P '*-mpi-rank='; then
-    _message "Specify the MPI rank of the result to be imported."
-    return 0;
-  else
-    _arguments -C "$markup_options[@]"
-  fi
+  _arguments -C "$markup_options[@]"
 }
 
 _advixe_cl_snapshot() {
@@ -540,13 +529,10 @@ _advixe_cl_snapshot() {
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
   '-- [Snapshot filename]:snapshot file:_files -g \*.advixeexpz'
-  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank'
+  '--mpi-rank=[MPI rank of the result to be imported]:MPI rank: _message\"MPI rank of the result to be imported\"'
   '--search-dir=[specify search directories]'
   )
-  if compset -P '*-mpi-rank='; then
-    _message "Specify the MPI rank of the result to be imported."
-    return 0;
-  elif compset -P '*-search-dir=*='; then
+  if compset -P '*-search-dir=*='; then
     _path_files -/
   elif compset -P '*-search-dir='; then
     local -a search_categories
