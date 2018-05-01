@@ -460,6 +460,9 @@ elif [[ $words[2] = --command ]] ; then
 elif [[ $words[2] = --collect ]] ; then
   _advixe_cl_collect
   return 0
+elif [[ $words[2] = --import-dir ]] ; then
+  _advixe_cl_mark_import_dir
+  return 0
 elif [[ $words[2] = --mark-up-loops ]] ; then
   _advixe_cl_mark_up_loops
   return 0
