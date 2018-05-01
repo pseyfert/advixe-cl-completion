@@ -70,9 +70,40 @@ _advixe_cl_collect() {
   fi
   # quick hack, to get the command out of the command line
   # TODO: fix that 'advixe-cl --collect string -<TAB>' does not complete w/o this hack
+  local collection
   if [[ $CURRENT -gt 3 ]]; then
+    if [[ $words[2] = '--collect' ]]; then
+      collection=$words[3]
+    fi
     shift 2 words
     (( CURRENT -= 2 ))
+  fi
+
+  if compset -P '*-search-dir=*='; then
+    _path_files -/
+    return 0
+  elif compset -P '*-search-dir='; then
+    local -a search_categories
+    search_categories=(
+    'all'
+    'bin'
+    'src'
+    'sym'
+    'all:r'
+    'bin:r'
+    'src:r'
+    'sym:r'
+    'all:p'
+    'bin:p'
+    'src:p'
+    'sym:p'
+    'all:rp'
+    'bin:rp'
+    'src:rp'
+    'sym:rp'
+    )
+    _wanted arguments expl "search categories" compadd -S '=' -- "$search_categories[@]"
+    return 0
   fi
 
   local collect_options;collect_options=(
@@ -84,9 +115,154 @@ _advixe_cl_collect() {
   '(-stack-stitching -no-stack-stitching)-no-stack-stitching[Do not restruct call flow to point introducing parallel workload]'
   '(-stacks -no-stacks)-stacks[Enable advanced collection of call stacks]'
   '(-stacks -no-stacks)-no-stacks[Disable advanced collection of call stacks]'
-  '(-start-paused -resume-after*)-start-paused[Start data collection paused]'
+  '(-filter-by-scope -no-filter-by-scope)-filter-by-scope[filter reported stack variables by scope]'
+  '(-filter-by-scope -no-filter-by-scope)-no-filter-by-scope[do not filter reported stack variables by scope]'
+  '(-filter-reductions -no-filter-reductions)-filter-reductions[potential reductions should be marked by specific diagnostic]'
+  '(-filter-reductions -no-filter-reductions)-no-filter-reductions[do not mark potential reductions]'
+  '(-flop -no-flop)-flop[collect data about floating-point operations, L1 memory traffic, utilization metric]'
+  '(-flop -no-flop)-no-flop[no collection of data about floating-point operations, ...]'
+  '(-ignore-app-mismatch -no-ignore-app-mismatch)-ignore-app-mismatch[ignore mismatched target or application parameters errors]'
+  '(-ignore-app-mismatch -no-ignore-app-mismatch)-no-ignore-app-mismatch[do not ignore mismatched target or application parameters errors]'
+  '(-ignore-checksums -no-ignore-checksums)-ignore-checksums[ignore mismatched modules checksums]'
+  '(-ignore-checksums -no-ignore-checksums)-no-ignore-checksums[do not ignore mismatched modules checksums]'
+  '(-delete-tripcounts -no-delete-tripcounts)-delete-tripcounts'
+  '(-delete-tripcounts -no-delete-tripcounts)-no-delete-tripcounts'
+  '(-mkl-user-mode -no-mkl-user-mode)-mkl-user-mode[show MKL loops and functions]'
+  '(-mkl-user-mode -no-mkl-user-mode)-no-mkl-user-mode[do not show MKL loops and functions]'
+  '(-profile-python -no-profile-python)-profile-python[show Python loops and functions]'
+  '(-profile-python -no-profile-python)-no-profile-python[do not show Python loops and functions]'
+  '(-spill-analysis -no-spill-analysis)-spill-analysis[enable register flow analysis]'
+  '(-spill-analysis -no-spill-analysis)-no-spill-analysis[disable register flow analysis]'
+  '(-trace-mpi -no-trace-mpi)-trace-mpi[Trace MPI code, and determine MPI rank IDs]'
+  '(-trace-mpi -no-trace-mpi)-no-trace-mpi[Do not trace MPI code, and determine MPI rank IDs]'
+  '(-stackwalk-mode=online -stackwalk-mode=offline)-stackwalk-mode=online[Analyze stacks during collection]'
+  '(-stackwalk-mode=online -stackwalk-mode=offline)-stackwalk-mode=offline[Analyze stacks after collection]'
+  '(-static-instruction-mix -no-static-instruction-mix)-static-instruction-mix[Calculate number of specific instructions]'
+  '(-static-instruction-mix -no-static-instruction-mix)-no-static-instruction-mix[Do not calculate number of specific instructions]'
+  '(-support-multi-isa-binaries -no-support-multi-isa-binaries)-support-multi-isa-binaries[Collect data for non-executed loops]'
+  '(-support-multi-isa-binaries -no-support-multi-isa-binaries)-no-support-multi-isa-binaries[Do not collect data for non-executed loops]'
+  '(-track-stack-variables -no-track-stack-variables)-track-stack-variables[Analyse stack variable parallel data sharing]'
+  '(-track-stack-variables -no-track-stack-variables)-no-track-stack-variables[Do not analyse stack variable parallel data sharing]'
+  '(-trip-counts -no-trip-counts)-trip-counts[Collect loop trip counts]'
+  '(-trip-counts -no-trip-counts)-no-trip-counts[Do not collect loop trip counts]'
+  '(-return-app-exitcode -no-return-app-exitcode)-return-app-exitcode[Return target exit code]'
+  '(-return-app-exitcode -no-return-app-exitcode)-no-return-app-exitcode[Return command line interface exit code]'
+  '(-auto-finalize -no-auto-finalize)-auto-finalize[Finalize collected data]'
+  '(-auto-finalize -no-auto-finalize)-no-auto-finalize[Do not run finalization of collected data]'
+  '(-record-mem-allocations -no-record-mem-allocations)-record-mem-allocations[Report access strides to heap variables]'
+  '(-record-mem-allocations -no-record-mem-allocations)-no-record-mem-allocations[No reports about access strides to heap variables]'
+  '(-record-stack-frame -no-record-stack-frame)-record-stack-frame[Report access strides to stack variables]'
+  '(-record-stack-frame -no-record-stack-frame)-no-record-stack-frame[No reports about access strides to stack variables]'
+  '(-refinalize-survey -no-refinalize-survey)-refinalize-survey[Refinalize survey result collected with a previous Advisor version]'
+  '(-refinalize-survey -no-refinalize-survey)-no-refinalize-survey[Do not refinalize survey result]'
+  '(-module-filter-mode=include -module-filter-mode=exclude)-module-filter-mode=include[Limit module filter by inclusion]'
+  '(-module-filter-mode=include -module-filter-mode=exclude)-module-filter-mode=exclude[Limit module filter by exclusion]'
+  '--option-file[Path of an option file]:option file:_path_files'
+  '--project-dir[Project directory - top-level directory of data collection]:project directory:_path_files -/'
+  '--app-working-dir[directory where the application will be run]:working directory:_path_files -/'
+  '--target-pid[attach to running process by process ID]:processes:_pids'
+  '--search-dir=[specify search directories]'
+  '(-trace-mode=full -trace-mode=linear -trace-mode=fibo)-trace-mode=full["full" trace of loop iterations]'
+  '(-trace-mode=full -trace-mode=linear -trace-mode=fibo)-trace-mode=linear["linear" trace of loop iterations]'
+  '(-trace-mode=full -trace-mode=linear -trace-mode=fibo)-trace-mode=fibo["fibo" trace of loop iterations]'
+  '(-mrte-mode=auto -mrte-mode=native -mrte-mode=mixed -mrte-mode=managed)-mrte-mode=auto'
+  '(-mrte-mode=auto -mrte-mode=native -mrte-mode=mixed -mrte-mode=managed)-mrte-mode=native[Do not attribute to managed sources]'
+  '(-mrte-mode=auto -mrte-mode=native -mrte-mode=mixed -mrte-mode=managed)-mrte-mode=mixed[Attribute data to managed sources where appropriate]'
+  '(-mrte-mode=auto -mrte-mode=native -mrte-mode=mixed -mrte-mode=managed)-mrte-mode=managed[Limit attribution to managed sources if available]'
+  '--exclude-files=[Comma-separated list of files to exclude from annotation scanning]'
+
   '-- [continue with target and target options]'
   )
+
+  local module_filter_text
+  module_filter_text="modules to include in / exclude from inspection, just 'libSomething.so' w/o path"
+  collect_options+=(
+  "-module-filter=[modules (.so files) to include in / exclude from inspection]: : _message \"$module_filter_text\""
+  )
+  _executable_of_interest_text() {
+    _message "name of the executable of interest"
+  }
+  collect_options+=(
+  '-executable-of-interest=[Inspect an application that is not the starting application]: :_executable_of_interest_text'
+  )
+  _stop_after_text() {
+    _message "Duration of data collection in seconds"
+  }
+  collect_options+=(
+  '-stop-after=[Duration of data collection in seconds]: :_stop_after_text'
+  )
+  _duration_text() {
+    _message "Duration in seconds (for system-wide collection), can be 'unlimited'"
+  }
+  collect_options+=(
+  '(-d)-duration=[Specify a duration for collection]: :_duration_text'
+  )
+  local interval_text;
+  interval_text="Time to wait before each collection"
+  collect_options+=(
+  "-interval=[$interval_text]: : _message \"$interval_text\""
+  )
+  _target_process_text() {
+    _message "Process name to attach to"
+  }
+  collect_options+=(
+  '-target-process=[Attach collection to a running process by process name]: :_target_process_text'
+  )
+  local data_limit_text
+  data_limit_text="Limit raw data to be collected"
+  collect_options+=(
+  "-data-limit=[$data_limit_text]: : _message \"$data_limit_text (integer)\""
+  )
+  _loop_count_text() {
+    _message "Maximum number of loop analyses (integer). 0=all instances"
+  }
+  collect_options+=(
+  '-loop-call-count-limit=[Set maximum number of loop instance analyses]: :_loop_count_text'
+  )
+  _strategy_text() {
+    _message "details for parent and child processes analyses"
+    _message "Format:"
+    _message "<process_name1>:<profiling_mode>,<process_name2>:<profiling_mode>,..."
+    _message "Profiling mode values are trace:trace, trace:notrace, notrace:notrace, notrace:trace"
+  }
+  collect_options+=(
+  '-strategy=[Specify details for parent and child process analysis]: :_strategy_text'
+  )
+  _loops_criteria() {
+    _values , criteria 'scalar' 'total-time>N' 'has-source' 'has-issue' 'loop-height=N'
+  }
+  collect_options+=(
+  '-loops=[Select loops for deeper analysis]: :_loops_criteria'
+  )
+  _mark_up_text() {
+    _message "comma separated N1,N5,N42, where 'Nx' is loop ID from survey report"
+  }
+  collect_options+=(
+  '-mark-up-list=[Specify loops for deeper analysis]: :_mark_up_text'
+  )
+
+  # if --resume-after=<number> is not in the current line, -start-paused still makes sense to add
+  # https://unix.stackexchange.com/a/411307
+  if [[ ${words[(i)--resume-after*]} -gt ${#words} ]]; then
+    collect_options+=(
+    '(-start-paused)-start-paused[Start data collection paused]'
+    )
+  fi
+
+  # mark-up is applicable to --collect map and --collect dependencies, but I only blacklist
+  # the others to have a chance of catching detection mistakes
+  if [[ $collection != survey || $collection != suitability || $collection != tripcounts ]] ; then
+    collect_options+=(
+    '(-mark-up -no-mark-up)-mark-up[source annotation only]'
+    '(-mark-up -no-mark-up)-no-mark-up')
+  fi
+  # -resume-after is applicable to --collect survey and --collect suitability, but I only blacklist
+  # the others to have a chance of catching detection mistakes
+  if [[ $collection != dependencies || $collection != map || $collection != tripcounts ]] ; then
+    collect_options+=(
+    '-resume-after=[Specify time in ms to delay collection]'
+    )
+  fi
   _arguments "$collect_options[@]"
 }
 
@@ -109,7 +285,6 @@ _advixe_cl_command() {
     if [[ $test_normal -ne 33 ]]; then
       return 0
     elif compset -P '*-result-dir='; then
-      _message "(outer) something to do"
       _path_files -/
     else
       # quick hack, to get the command out of the command line
