@@ -142,7 +142,6 @@ _advixe_cl_report() {
     "-filter=[filter data by by column name]: : _message \"column name\""
     )
   fi
-  )
   _csv_delimiters() {
     _wanted arguments expl "csv separator" compadd -- "comma" "tab" "semicolon"
   }
@@ -239,7 +238,6 @@ _advixe_cl_import_dir() {
   else
     _arguments -C "$import_options[@]"
   fi
-}
 }
 
 _advixe_cl_collect() {
