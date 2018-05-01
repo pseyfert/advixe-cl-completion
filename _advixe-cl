@@ -27,7 +27,7 @@ local advixe_actions;advixe_actions=(
 '--report'
 '--snapshot[Create a result snapshot]'
 '--version[Print version number]'
-'--workflow')
+'--workflow[Display explanation of advisor workflows]')
 
 _conditional_normal() {
   # NB: the current word is in words, and I don't want to trigger here on --<tab>
@@ -466,11 +466,11 @@ elif [[ $words[2] = --import-dir ]] ; then
 elif [[ $words[2] = --mark-up-loops ]] ; then
   _advixe_cl_mark_up_loops
   return 0
-else
-# not implemented
-  # '--import-dir'
-  # '--mark-up-loops'
-  # '--report'
-  # '--workflow'
+elif [[ $words[2] = --workflow ]] ; then
+  _message "no more arguments"
+  return 0
+elif [[ $words[2] = --report ]] ; then
   _message "not implemented yet, sorry"
+else
+  _message "ERROR: completion couldn't identify / doesn't know action"
 fi
