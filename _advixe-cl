@@ -19,21 +19,24 @@
 # or submit itself to any jurisdiction.
 
 local advixe_actions;advixe_actions=(
-'--collect[Collect specified data]'
-'--command[Send a command to a running data collection]'
-'--help[Print help message (global one, or for an action)]'
-'--import-dir[Import previously collected data from the given directory]'
-'--mark-up-loops[Select loops for deeper analysis]'
-'--report[Report the results that were previously gathered]'
-'--snapshot[Create a result snapshot]'
-'--version[Print version number]'
-'--workflow[Display explanation of advisor workflows]')
+'--collect[Collect specified data]: : _advixe_cl_collect_data'
+'--command[Send a command to a running data collection]: : _advixe_cl_command_command'
+'--help[Print help message (global one, or for an action)]: : _advixe_help'
+'--import-dir[Import previously collected data from the given directory]: : _path_files -/'
+'--mark-up-loops[Select loops for deeper analysis]: : _advixe_cl_mark_up_loops'
+'--report[Report the results that were previously gathered]: :_reporttype'
+'--snapshot[Create a result snapshot]: : _advixe_cl_snapshot'
+'--version[Print version number]: : _message "no more arguments"'
+'--workflow[Display explanation of advisor workflows]: : _message "no more arguments"')
 
 _conditional_normal() {
   # NB: the current word is in words, and I don't want to trigger here on --<tab>
-  if [[ ${words[(i)--]} -lt ${#words} ]]; then
-    local shift_by
-    shift_by=${words[(i)--]}
+  # _message "CURRENT is $CURRENT"
+  # _message "while shift_by is ${words[(i)--]}"
+  # _message "words lenght is ${#words}"
+  local shift_by
+  shift_by=${words[(i)--]}
+  if [[ ( ${shift_by} -lt ${#words} ) && ( $CURRENT -gt ${shift_by} ) ]]; then
     shift $shift_by words
     (( CURRENT -= $shift_by ))
 
@@ -41,7 +44,6 @@ _conditional_normal() {
     #do
     #  _message "word $i is $words[i]"
     #done
-    #_message "CURRENT is $CURRENT"
     _normal
   else
     # there is no -- in the current line
@@ -49,9 +51,7 @@ _conditional_normal() {
   fi
 }
 
-_advixe_cl_report() {
-  local reporttype
-  if [[ $CURRENT = 3 ]]; then
+_reporttype() {
     local -a reports
     reports=(
     survey:"shows results of the survey analysis"
@@ -71,6 +71,13 @@ _advixe_cl_report() {
     )
     _describe -t reports 'data to collect' reports $*
     return 0
+}
+
+_advixe_cl_report() {
+  local reporttype
+  if [[ $CURRENT = 3 ]]; then
+    _reporttype
+    return $?
   else
     # quick hack, to get the command out of the command line
     # TODO: fix that 'advixe-cl --collect string -<TAB>' does not complete w/o this hack
@@ -131,7 +138,7 @@ _advixe_cl_report() {
   '--report-output=[set output file for report]: :_path_files'
   "--limit=[set number of items to print]: : _message \"items to print (unsigned int)\""
   )
-  if [[ $reporttype = "survey" ]]; then 
+  if [[ $reporttype = "survey" ]]; then
     if [[ ${words[(i)--sort*]} -gt ${#words} ]]; then
       report_options+=(
       '(-s -S)'{--sort-asc=,-s}="[sort data ascending by column name]: : _message \"column name\""
@@ -182,18 +189,23 @@ _advixe_cl_import_dir() {
   _arguments -C "$import_options[@]"
 }
 
+_advixe_cl_collect_data() {
+  local -a advixe_collect_data
+  advixe_collect_data=(
+  survey:"Explore where to add efficient vectorization and/or threading."
+  dependencies:"Identify and explore loop-carried dependencies for marked loops."
+  map:"Identify and explore complex memory accesses for marked loops."
+  suitability:"Analyze the annotated program to check its predicted parallel performance."
+  tripcounts:"Find how many iterations are executed."
+  )
+  _describe -t collect-datas 'data to collect' advixe_collect_data $*
+  return 0
+}
+
 _advixe_cl_collect() {
   if [[ $CURRENT = 3 ]]; then
-    local -a advixe_collect_data
-    advixe_collect_data=(
-    survey:"Explore where to add efficient vectorization and/or threading."
-    dependencies:"Identify and explore loop-carried dependencies for marked loops."
-    map:"Identify and explore complex memory accesses for marked loops."
-    suitability:"Analyze the annotated program to check its predicted parallel performance."
-    tripcounts:"Find how many iterations are executed."
-    )   
-    _describe -t collect-datas 'data to collect' advixe_collect_data $*
-    return 0
+    _advixe_cl_collect_data
+    return $?
   fi
   local test_normal
   _conditional_normal
@@ -372,18 +384,22 @@ _advixe_cl_collect() {
   _arguments "$collect_options[@]"
 }
 
+_advixe_cl_command_command() {
+  local -a advixe_command_commands
+  advixe_command_commands=(
+  'detach'
+  'pause'
+  'resume'
+  'cancel'
+  'stop'
+  'status'
+  )
+  _wanted arguments expl 'command' compadd -- "$advixe_command_commands[@]"
+}
+
 _advixe_cl_command() {
   if [[ $CURRENT = 3 ]]; then
-    local -a advixe_command_commands
-    advixe_command_commands=(
-    'detach'
-    'pause'
-    'resume'
-    'cancel'
-    'stop'
-    'status'
-    )
-    _wanted arguments expl 'command' compadd -- "$advixe_command_commands[@]"
+    __advixe_cl_command_command
   else
     local test_normal
     _conditional_normal
@@ -431,6 +447,10 @@ _advixe_cl_mark_up_loops() {
   _arguments -C "$markup_options[@]"
 }
 
+_advixe_help() {
+  _values 'actions' ${${advixe_actions[@]/--/}/:*} && return 0
+}
+
 _advixe_cl_snapshot() {
   if [[ $words[(($CURRENT - 1))] = -- ]] ; then
     _files -X 'snapshot filename' -g '*.advixeexpz'
@@ -453,7 +473,7 @@ _advixe_cl_snapshot() {
   _arguments -C "$snapshot_options[@]"
 }
 
-if [ $CURRENT -eq 2 ] ; then
+if [ $CURRENT -le 3 ] ; then
   # suggest <action>
   _arguments ${advixe_actions} && return 0
 elif [[ $words[2] = --help ]] ; then
@@ -462,7 +482,7 @@ elif [[ $words[2] = --help ]] ; then
   # leading -- need to be stripped off
   if [ $CURRENT -eq 3 ]
   then
-    _values 'actions' ${advixe_actions[@]/--/} && return 0
+    _advixe_help && return 0
   else
     # no further completion after 'advixe-cl --help <action>'
     return 0
@@ -516,7 +536,7 @@ elif [[ $words[2] = --collect ]] ; then
   _advixe_cl_collect
   return 0
 elif [[ $words[2] = --import-dir ]] ; then
-  _advixe_cl_mark_import_dir
+  _advixe_cl_import_dir
   return 0
 elif [[ $words[2] = --report ]] ; then
   _advixe_cl_report
