@@ -227,8 +227,8 @@ _advixe_cl_collect() {
   local collect_options;collect_options=(
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
-  '(--benchmark-sync --no-benchmark-sync)--benchmark-sync[Only one of concurrently executing Advisor instances runs benchmarks.]'
-  '(--benchmark-sync --no-benchmark-sync)--no-benchmark-sync[All concurrently executing Advisor instances run benchmarks.]'
+  '(--benchmarks-sync --no-benchmarks-sync)--benchmarks-sync[Only one of concurrently executing Advisor instances runs benchmarks.]'
+  '(--benchmarks-sync --no-benchmarks-sync)--no-benchmarks-sync[All concurrently executing Advisor instances run benchmarks.]'
   '(--stack-stitching --no-stack-stitching)--stack-stitching[Restruct call flow to point introducing parallel workload]'
   '(--stack-stitching --no-stack-stitching)--no-stack-stitching[Do not restruct call flow to point introducing parallel workload]'
   '(--stacks --no-stacks)--stacks[Enable advanced collection of call stacks]'
@@ -261,6 +261,8 @@ _advixe_cl_collect() {
   '(--support-multi-isa-binaries --no-support-multi-isa-binaries)--no-support-multi-isa-binaries[Do not collect data for non-executed loops]'
   '(--track-stack-variables --no-track-stack-variables)--track-stack-variables[Analyse stack variable parallel data sharing]'
   '(--track-stack-variables --no-track-stack-variables)--no-track-stack-variables[Do not analyse stack variable parallel data sharing]'
+  '(--enable-cache-simulation --no-enable-cache-simulation)--enable-cache-simulation[Model CPU cache behaviour on]'
+  '(--enable-cache-simulation --no-enable-cache-simulation)--no-enable-cache-simulation[Do not model CPU cache behaviour on]'
   '(--trip-counts --no-trip-counts)--trip-counts[Collect loop trip counts]'
   '(--trip-counts --no-trip-counts)--no-trip-counts[Do not collect loop trip counts]'
   '(--return-app-exitcode --no-return-app-exitcode)--return-app-exitcode[Return target exit code]'
@@ -287,6 +289,9 @@ _advixe_cl_collect() {
   '(--mrte-mode=auto --mrte-mode=native --mrte-mode=mixed --mrte-mode=managed)--mrte-mode=native[Do not attribute to managed sources]'
   '(--mrte-mode=auto --mrte-mode=native --mrte-mode=mixed --mrte-mode=managed)--mrte-mode=mixed[Attribute data to managed sources where appropriate]'
   '(--mrte-mode=auto --mrte-mode=native --mrte-mode=mixed --mrte-mode=managed)--mrte-mode=managed[Limit attribution to managed sources if available]'
+  '(--cachesim-mode=cache-misses --cachesim-mode=footprint --cachesim-mode=utilization)--cachesim-mode=cache-misses[model cache misses only]'
+  '(--cachesim-mode=cache-misses --cachesim-mode=footprint --cachesim-mode=utilization)--cachesim-mode=footprint[model cache misses and memory footprint]'
+  '(--cachesim-mode=cache-misses --cachesim-mode=footprint --cachesim-mode=utilization)--cachesim-mode=utilization[model cache misses and cache utilization]'
   '--exclude-files=[Comma-separated list of files to exclude from annotation scanning]'
 
   '-- [continue with target and target options]'
@@ -336,6 +341,21 @@ _advixe_cl_collect() {
   }
   collect_options+=(
   '--loop-call-count-limit=[Set maximum number of loop instance analyses]: :_loop_count_text'
+  )
+  local cachesimassoctext
+  cachesimassoctext="Set cache associativity (depth) for modelling"
+  collect_options+=(
+  "--cachesim-associativity=[$cachesimassoctext]: : _message \"$cachesimassoctext (power of 2)\""
+  )
+  local cachesimlinesizetext
+  cachesimlinesizetext="Set cache line size for modelling"
+  collect_options+=(
+  "--cachesim-cacheline-size=[$cachesimlinesizetext]: : _message \"$cachesimlinesizetext (power of 2, <65536)\""
+  )
+  local cachesimsetstext
+  cachesimsetstext="Set number of sets (length) for modelling"
+  collect_options+=(
+  "--cachesim-sets=[$cachesimsetstext]: : _message \"$cachesimsetstext (power of 2)\""
   )
   _strategy_text() {
     _message "details for parent and child processes analyses"
