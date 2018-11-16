@@ -232,12 +232,14 @@ _advixe_cl_collect() {
     for i in ${(s.:.)"$(lscpu --parse=CACHE|tail -1)"}; do
       (( j=i+1 ))
       (( nowat++ == 1 )) && continue
+      (( nowat-- ))
       retval+=$j
       retval+=":"
-      retval+=$(cat /sys/devices/system/cpu/cpu0/cache/index$i/ways_of_associativity)
+      retval+=$(cat /sys/devices/system/cpu/cpu0/cache/index$nowat/ways_of_associativity)
       retval+="w"
       retval+=":"
-      retval+=${(L)$(cat /sys/devices/system/cpu/cpu0/cache/index$i/size)}
+      retval+=${(L)$(cat /sys/devices/system/cpu/cpu0/cache/index$nowat/size)}
+      (( nowat++ ))
       (( nowat != 4 )) && retval+="/"
     done
     local -a suggestions
