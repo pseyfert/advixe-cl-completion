@@ -224,6 +224,28 @@ _advixe_cl_collect() {
     (( CURRENT -= 2 ))
   fi
 
+  __cache_config() {
+    local -i nowat
+    local retval
+    nowat=0
+    retval=""
+    for i in ${(s.:.)"$(lscpu --parse=CACHE|tail -1)"}; do
+      (( j=i+1 ))
+      (( nowat++ == 1 )) && continue
+      retval+=$j
+      retval+=":"
+      retval+=$(cat /sys/devices/system/cpu/cpu0/cache/index$i/ways_of_associativity)
+      retval+="w"
+      retval+=":"
+      retval+=${(L)$(cat /sys/devices/system/cpu/cpu0/cache/index$i/size)}
+      (( nowat != 4 )) && retval+="/"
+    done
+    local -a suggestions
+    suggestions=($retval)
+    _wanted arguments expl "[num L1]:[L1 connect]:[L1 size]/[num L2]:[L2 connect]:[L2 size]/[num L3]:[L3 connect]:[L3 size]" compadd -- "${retval}"
+  }
+
+
   local collect_options;collect_options=(
   '(-q --quiet -v --verbose)'{-q,--quiet}'[Suppress non-essential messages]'
   '(-v --verbose -q --quiet)'{-v,--verbose}'[Print additional information]'
@@ -263,6 +285,7 @@ _advixe_cl_collect() {
   '(--track-stack-variables --no-track-stack-variables)--no-track-stack-variables[Do not analyse stack variable parallel data sharing]'
   '(--enable-cache-simulation --no-enable-cache-simulation)--enable-cache-simulation[Model CPU cache behaviour on]'
   '(--enable-cache-simulation --no-enable-cache-simulation)--no-enable-cache-simulation[Do not model CPU cache behaviour on]'
+  '--cache-config=[Specify cache hierarchy]:cache hierarchy:__cache_config'
   '(--trip-counts --no-trip-counts)--trip-counts[Collect loop trip counts]'
   '(--trip-counts --no-trip-counts)--no-trip-counts[Do not collect loop trip counts]'
   '(--return-app-exitcode --no-return-app-exitcode)--return-app-exitcode[Return target exit code]'
