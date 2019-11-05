@@ -325,7 +325,7 @@ _advixe_cl_collect() {
   local module_filter_text
   module_filter_text="modules to include in / exclude from inspection, just 'libSomething.so' w/o path"
   collect_options+=(
-  "--module-filter=[modules (.so files) to include in / exclude from inspection]: : _message \"$module_filter_text\""
+  "*--module-filter=[modules (.so files) to include in / exclude from inspection]: : _message \"$module_filter_text\""
   )
   _executable_of_interest_text() {
     _message "name of the executable of interest"
@@ -343,7 +343,7 @@ _advixe_cl_collect() {
     _message "Duration in seconds (for system-wide collection), can be 'unlimited'"
   }
   collect_options+=(
-  '(-d)--duration=[Specify a duration for collection]: :_duration_text'
+  '(-d --duration)'{-d,--duration=}'[Specify a duration for collection]: :_duration_text'
   )
   local interval_text;
   interval_text="Time to wait before each collection"
