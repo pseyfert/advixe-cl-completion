@@ -271,6 +271,10 @@ _advixe_cl_collect() {
   '(--delete-tripcounts --no-delete-tripcounts)--no-delete-tripcounts'
   '(--mkl-user-mode --no-mkl-user-mode)--mkl-user-mode[show MKL loops and functions]'
   '(--mkl-user-mode --no-mkl-user-mode)--no-mkl-user-mode[do not show MKL loops and functions]'
+  '(--profile-intel-perf-libs --no-profile-intel-perf-libs)--profile-intel-perf-libs[Select to show Intel performance libraries loops and functions in Advisor reports]'
+  '(--profile-intel-perf-libs --no-profile-intel-perf-libs)--no-profile-intel-perf-libs[Do not select to show Intel performance libraries loops and functions in Advisor reports]'
+  '(--profile-jit --no-profile-jit)--profile-jit[Collect metrics for dynamic loops and functions]'
+  '(--profile-jit --no-profile-jit)--no-profile-jit[Do not collect metrics for dynamic loops and functions]'
   '(--profile-python --no-profile-python)--profile-python[show Python loops and functions]'
   '(--profile-python --no-profile-python)--no-profile-python[do not show Python loops and functions]'
   '(--spill-analysis --no-spill-analysis)--spill-analysis[enable register flow analysis]'
@@ -283,10 +287,16 @@ _advixe_cl_collect() {
   '(--static-instruction-mix --no-static-instruction-mix)--no-static-instruction-mix[Do not calculate number of specific instructions]'
   '(--support-multi-isa-binaries --no-support-multi-isa-binaries)--support-multi-isa-binaries[Collect data for non-executed loops]'
   '(--support-multi-isa-binaries --no-support-multi-isa-binaries)--no-support-multi-isa-binaries[Do not collect data for non-executed loops]'
+  '(--track-heap-objects --no-track-heap-objects)--track-heap-objects[Attribute heap-allocated objects to the analyzed loops that accessed the objects.]'
+  '(--track-heap-objects --no-track-heap-objects)--no-track-heap-objects[Do not attribute heap-allocated objects to the analyzed loops that accessed the objects.]'
   '(--track-stack-variables --no-track-stack-variables)--track-stack-variables[Analyse stack variable parallel data sharing]'
   '(--track-stack-variables --no-track-stack-variables)--no-track-stack-variables[Do not analyse stack variable parallel data sharing]'
   '(--enable-cache-simulation --no-enable-cache-simulation)--enable-cache-simulation[Model CPU cache behaviour on]'
   '(--enable-cache-simulation --no-enable-cache-simulation)--no-enable-cache-simulation[Do not model CPU cache behaviour on]'
+  '(--enable-data-transfer-analysis --no-enable-data-transfer-analysis)--enable-data-transfer-analysis[Enable the simulator to model data transfer between host memory and device memory.]'
+  '(--enable-data-transfer-analysis --no-enable-data-transfer-analysis)--no-enable-data-transfer-analysis[Disable the simulator to model data transfer between host memory and device memory.]'
+  '(--cache-sources --no-cache-sources)--cache-sources[Enable source code visibility in a read-only snapshot]'
+  '(--cache-sources --no-cache-sources)--no-cache-sources[Disable source code visibility in a read-only snapshot]'
   '--cache-config=[Specify cache hierarchy]:cache hierarchy:__cache_config'
   '(--trip-counts --no-trip-counts)--trip-counts[Collect loop trip counts]'
   '(--trip-counts --no-trip-counts)--no-trip-counts[Do not collect loop trip counts]'
@@ -372,6 +382,11 @@ _advixe_cl_collect() {
   collect_options+=(
   "--cachesim-associativity=[$cachesimassoctext]: : _message \"$cachesimassoctext (power of 2)\""
   )
+  local datatransferpagesizetext
+  datatransferpagesizetext="Set the traffic measurement granularity in the data transfer simulator."
+  collect_options+=(
+  "--data-transfer-page-size=[$datatransferpagesizetext]: : _message \"$datatransferpagesizetext (power of 2 from 4 to 8192)\""
+  )
   local cachesimlinesizetext
   cachesimlinesizetext="Set cache line size for modelling"
   collect_options+=(
@@ -398,7 +413,7 @@ _advixe_cl_collect() {
   '--loops=[Select loops for deeper analysis]: :_loops_criteria'
   )
   _mark_up_text() {
-    _message "comma separated N1,N5,N42, where 'Nx' is loop ID from survey report"
+    _message "comma separated N1,N5,file:line, where 'Nx' is loop ID from survey report"
   }
   collect_options+=(
   '--mark-up-list=[Specify loops for deeper analysis]: :_mark_up_text'
